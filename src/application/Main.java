@@ -44,6 +44,15 @@ public class Main extends Application {
 			scene.getStylesheets().add(getClass().getResource("application.css").toExternalForm());
 			primaryStage.setScene(scene);
 			primaryStage.show();
+			
+			patientButton.setOnAction(e ->
+	            {
+	            	// go to patient login page
+	            	Stage loginStage = new Stage();
+	                PatientLoginPage loginPage = new PatientLoginPage();
+	                loginPage.start(loginStage);
+	                primaryStage.hide();
+	            });
 		} catch(Exception e) {
 			e.printStackTrace();
 		}

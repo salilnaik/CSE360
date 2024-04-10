@@ -1,5 +1,10 @@
 package application;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.PrintWriter;
+
 import javafx.application.Application;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -9,10 +14,6 @@ import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
-
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
 
 public class CreateAccountPage extends Application
 {
@@ -28,7 +29,7 @@ public class CreateAccountPage extends Application
     @Override
     public void start(Stage primaryStage)
     {
-        primaryStage.setTitle("Create Account");
+    	primaryStage.setTitle("Create Account");
 
         VBox root = new VBox();
         root.setAlignment(Pos.CENTER);
@@ -122,34 +123,15 @@ public class CreateAccountPage extends Application
                 errorLabel.setText("Passwords do not match.");
                 return;
             }
-            
-            // if correct, create account
-            String username = constructUsername(firstName, lastName, dob);
-            String directoryPath = "patient_login/";
-            File directory = new File(directoryPath);
-            if (!directory.exists())
-            {
-                if (!directory.mkdirs())
-                {
-                    System.out.println("Failed to create directory: " + directoryPath);
-                    return;
-                }
-            }
-            
-            String filePath = directoryPath + username + ".txt";
-            try (FileWriter writer = new FileWriter(filePath, true))
-            {
-                writer.write(password + "\n");
-                System.out.println("Account created successfully!");
-                System.out.println("File path: " + filePath);
-               
-                
-            } 
-            
-            catch (IOException ex)
-            {
-                System.out.println("Error occurred while creating account: " + ex.getMessage());
-            }
+            // if correct create account
+            String username = firstName + lastName + dob.replaceAll("[-|/|.]", ""); // <- Regex replaces all '-', '/', '.' characters in birthday with ""
+            try {
+    			PrintWriter writer = new PrintWriter(new FileOutputStream(new File("patient_login/" + username + ".txt"), true));
+    			writer.write(password + "\n" + firstName + "\n" + lastName + "\n" + phoneNumber + "\n" + dob + "\n\n\n");
+    			writer.close();
+    		} catch(IOException exception) {
+    			System.out.println(exception);
+    		}
         });
 
 
@@ -157,15 +139,6 @@ public class CreateAccountPage extends Application
         Scene scene = new Scene(root, 900, 600);
         primaryStage.setScene(scene);
         primaryStage.show();
-    }
-
-    private String constructUsername(String firstName, String lastName, String dob)
-    {
-        // construct the username using the specified format
-        String firstNameInitial = firstName.substring(0, 1).toLowerCase();
-        String lastNameWithoutSpaces = lastName.replace(" ", "").toLowerCase();
-        String yearOfBirth = dob.substring(0, 4);
-        return firstNameInitial + lastNameWithoutSpaces + yearOfBirth;
     }
 
     public static void main(String[] args)
