@@ -1,0 +1,8 @@
+First Name: John
+Last Name: Doe
+Date of Birth: 2000-01-01
+Email: johndoe@gmail.com
+Phone Number: 123-456-7890
+Pharmacy Information: ABC Pharmacy
+Insurance ID: 57483
+Password: password
