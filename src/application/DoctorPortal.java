@@ -1,10 +1,14 @@
 package application;
 
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.Scanner;
 
 import javafx.application.Application;
 import javafx.collections.FXCollections;
@@ -22,10 +26,11 @@ public class DoctorPortal extends Application
     private String username;
     private TextArea findingsTextArea;
     private TextArea prescriptionTextArea;
-    private TextArea allergiesTextArea;
     private TextArea immunizationsTextArea;
     private TextArea medicalRecordsTextArea;
     private TextArea messagesTextArea; 
+    private Patient patient;
+    private Database db = new Database();
 
     public DoctorPortal(String username)
     {
@@ -57,13 +62,25 @@ public class DoctorPortal extends Application
             String selectedPatient = patientsComboBox.getValue();
             if (selectedPatient != null && !selectedPatient.isEmpty())
             {
+            	String out = "";
+                try {
+	                Scanner reader = new Scanner(new File("patient_info/" + patientsComboBox.getValue() + ".txt"));
+	    			while(reader.hasNextLine()) {
+	    				out += reader.nextLine() + "\n";
+	    			}
+                }catch(IOException exception) {
+                	System.out.println(exception);
+                }
+                medicalRecordsTextArea.setText(out);
+            	patient = db.getPatientInfo(selectedPatient);
                 loadMessages(selectedPatient);
             }
         });
 
         medicalRecordsTextArea = new TextArea();
-        medicalRecordsTextArea.setPromptText("Enter medical records here...");
+        medicalRecordsTextArea.setPromptText("No patient history yet.");
         medicalRecordsTextArea.setPrefHeight(200); 
+        medicalRecordsTextArea.setEditable(false);
 
         // add fields for updating medical records
         findingsTextArea = new TextArea();
@@ -73,10 +90,6 @@ public class DoctorPortal extends Application
         prescriptionTextArea = new TextArea();
         prescriptionTextArea.setPromptText("Enter prescription here...");
         prescriptionTextArea.setPrefHeight(100); 
-
-        allergiesTextArea = new TextArea();
-        allergiesTextArea.setPromptText("Enter allergies here...");
-        allergiesTextArea.setPrefHeight(100);
 
         immunizationsTextArea = new TextArea();
         immunizationsTextArea.setPromptText("Enter immunizations here...");
@@ -92,14 +105,22 @@ public class DoctorPortal extends Application
         {
             // get selected patient and update medical records
             String selectedPatient = patientsComboBox.getValue();
-            upload(selectedPatient);
+            
+            try {
+				PrintWriter writer = new PrintWriter(new FileOutputStream(new File("patient_info/" + patient.getPatientId() + ".txt"), true));
+				writer.append("\nFINDINGS:\n" + findingsTextArea.getText() + "\nIMMUNIZATIONS/PRESCRIPTIONS:\n" + "Immunizations:\n" + immunizationsTextArea.getText() + "\nPrescriptions:\n" + prescriptionTextArea.getText());
+				writer.close();
+			} catch(FileNotFoundException exception) {
+				System.out.println(exception);
+			}
+            
+//            upload(selectedPatient);
         });
 
         VBox updateMedicalRecordsBox = new VBox(10);
         updateMedicalRecordsBox.setAlignment(Pos.CENTER);
         updateMedicalRecordsBox.getChildren().addAll(
-                patientsComboBox, findingsTextArea, immunizationsTextArea,
-                allergiesTextArea, prescriptionTextArea, updateButton
+                patientsComboBox, findingsTextArea, immunizationsTextArea, prescriptionTextArea, updateButton
         );
 
         Button exitButton = new Button("Exit");
@@ -122,95 +143,92 @@ public class DoctorPortal extends Application
     // Method to get patient IDs from the Database
     private ObservableList<String> getPatientIDs()
     {
-        Database database = new Database();
-        return FXCollections.observableArrayList(database.getPatientIDs());
+        return FXCollections.observableArrayList(db.getPatientIDs());
     }
 
 
-    private void upload(String patientUsername)
-    {
-        String newFindings = findingsTextArea.getText();
-        String newPrescription = prescriptionTextArea.getText();
-        String newAllergies = allergiesTextArea.getText();
-        String newImmunizations = immunizationsTextArea.getText();
-
-        // update patient information in the file
-        String patientFilePath = "patient_login/" + patientUsername + ".txt";
-        try (BufferedReader reader = new BufferedReader(new FileReader(patientFilePath)))
-        {
-            String line;
-            StringBuilder updatedInfo = new StringBuilder();
-            boolean foundFindings = false;
-            boolean foundPrescription = false;
-            boolean foundAllergies = false;
-            boolean foundImmunizations = false;
-            while ((line = reader.readLine()) != null)
-            {
-                String[] parts = line.split(":");
-                if (parts.length == 2) {
-                    String key = parts[0].trim();
-                    String value = parts[1].trim();
-                    switch (key) {
-                        case "Findings":
-                            updatedInfo.append("Findings: ").append(newFindings).append("\n");
-                            foundFindings = true;
-                            break;
-                        case "Prescription":
-                            updatedInfo.append("Prescription: ").append(newPrescription).append("\n");
-                            foundPrescription = true;
-                            break;
-                        case "Allergies":
-                            updatedInfo.append("Allergies: ").append(newAllergies).append("\n");
-                            foundAllergies = true;
-                            break;
-                        case "Immunizations":
-                            updatedInfo.append("Immunizations: ").append(newImmunizations).append("\n");
-                            foundImmunizations = true;
-                            break;
-                        default:
-                            updatedInfo.append(line).append("\n");
-                    }
-                }
-            }
-            // Append immunizations and allergies if not found
-            if (!foundImmunizations)
-            {
-                updatedInfo.append("Immunizations: ").append(newImmunizations).append("\n");
-            }
-            
-            if (!foundAllergies)
-            {
-                updatedInfo.append("Allergies: ").append(newAllergies).append("\n");
-            }
-            // write the updated information back to the file
-            try (PrintWriter writer = new PrintWriter(new FileWriter(patientFilePath)))
-            {
-                writer.print(updatedInfo.toString());
-                System.out.println("Patient information updated successfully");
-                // append findings, immunizations, allergies, and prescriptions to the medical records box
-                medicalRecordsTextArea.appendText("\n\nFindings: " + newFindings);
-                medicalRecordsTextArea.appendText("\nImmunizations: " + newImmunizations);
-                medicalRecordsTextArea.appendText("\nAllergies: " + newAllergies);
-                medicalRecordsTextArea.appendText("\nPrescription: " + newPrescription);
-            }
-            
-            catch (IOException ex)
-            {
-                System.err.println("Error updating patient information: " + ex.getMessage());
-            }
-        }
-        
-        catch (IOException e)
-        {
-            System.err.println("Error reading patient information: " + e.getMessage());
-        }
-
-    }
+//    private void upload(String patientUsername)
+//    {
+//        String newFindings = findingsTextArea.getText();
+//        String newPrescription = prescriptionTextArea.getText();
+//        String newImmunizations = immunizationsTextArea.getText();
+//
+//        // update patient information in the file
+//        String patientFilePath = "patient_login/" + patientUsername + ".txt";
+//        try (BufferedReader reader = new BufferedReader(new FileReader(patientFilePath)))
+//        {
+//            String line;
+//            StringBuilder updatedInfo = new StringBuilder();
+//            boolean foundFindings = false;
+//            boolean foundPrescription = false;
+//            boolean foundAllergies = false;
+//            boolean foundImmunizations = false;
+//            while ((line = reader.readLine()) != null)
+//            {
+//                String[] parts = line.split(":");
+//                if (parts.length == 2) {
+//                    String key = parts[0].trim();
+//                    String value = parts[1].trim();
+//                    switch (key) {
+//                        case "Findings":
+//                            updatedInfo.append("Findings: ").append(newFindings).append("\n");
+//                            foundFindings = true;
+//                            break;
+//                        case "Prescription":
+//                            updatedInfo.append("Prescription: ").append(newPrescription).append("\n");
+//                            foundPrescription = true;
+//                            break;
+//                        case "Allergies":
+//                            updatedInfo.append("Allergies: ").append(newAllergies).append("\n");
+//                            foundAllergies = true;
+//                            break;
+//                        case "Immunizations":
+//                            updatedInfo.append("Immunizations: ").append(newImmunizations).append("\n");
+//                            foundImmunizations = true;
+//                            break;
+//                        default:
+//                            updatedInfo.append(line).append("\n");
+//                    }
+//                }
+//            }
+//            // Append immunizations and allergies if not found
+//            if (!foundImmunizations)
+//            {
+//                updatedInfo.append("Immunizations: ").append(newImmunizations).append("\n");
+//            }
+//            
+//            if (!foundAllergies)
+//            {
+//                updatedInfo.append("Allergies: ").append(newAllergies).append("\n");
+//            }
+//            // write the updated information back to the file
+//            try (PrintWriter writer = new PrintWriter(new FileWriter(patientFilePath)))
+//            {
+//                writer.print(updatedInfo.toString());
+//                System.out.println("Patient information updated successfully");
+//                // append findings, immunizations, allergies, and prescriptions to the medical records box
+//                medicalRecordsTextArea.appendText("\n\nFindings: " + newFindings);
+//                medicalRecordsTextArea.appendText("\nImmunizations: " + newImmunizations);
+//                medicalRecordsTextArea.appendText("\nAllergies: " + newAllergies);
+//                medicalRecordsTextArea.appendText("\nPrescription: " + newPrescription);
+//            }
+//            
+//            catch (IOException ex)
+//            {
+//                System.err.println("Error updating patient information: " + ex.getMessage());
+//            }
+//        }
+//        
+//        catch (IOException e)
+//        {
+//            System.err.println("Error reading patient information: " + e.getMessage());
+//        }
+//
+//    }
     
     private void loadMessages(String patientId)
     {
-        Database database = new Database();
-        String messages = database.getMessages(patientId);
+        String messages = db.getMessages(patientId);
         messagesTextArea.setText(messages);
     }
 
