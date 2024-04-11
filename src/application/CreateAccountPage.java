@@ -185,6 +185,7 @@ public class CreateAccountPage extends Application
                 }
             }
 
+            // populate file with patient info
             String filePath = directoryPath + username + ".txt";
             try (PrintWriter writer = new PrintWriter(new FileOutputStream(new File(filePath), true)))
             {
