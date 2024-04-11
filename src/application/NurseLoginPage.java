@@ -94,7 +94,8 @@ public class NurseLoginPage extends Application
         
         else
         {
-            errorLabel.setText("Invalid username or password.");
+            errorLabel.setText("Invalid login."); 
+            // error message does not tell the user exactly what is incorrect; prevents oversharing info
         }
     }
 
