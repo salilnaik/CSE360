@@ -6,7 +6,7 @@ public class Nurse
     private String employeeId;
     private String messages;
 
-    public Doctor(String username, String employeeId)
+    public Nurse(String username, String employeeId)
     {
         this.username = username;
         this.employeeId = employeeId;
