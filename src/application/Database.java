@@ -167,7 +167,7 @@ public class Database {
 		try {
 			Scanner reader = new Scanner(new File("patient_login/" + patientId + ".txt"));
 			reader.nextLine(); // ignore password
-			p.setFirstName(reader.nextLine());
+			p.setFirstName(reader.nextLine()); // get all patient info from file 
 			p.setLastName(reader.nextLine());
 			p.setPhone(reader.nextLine());
 			p.setBirthday(reader.nextLine());
