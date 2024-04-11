@@ -273,6 +273,7 @@ public class PatientPortal extends Application
         	System.out.println(exception);
         }
         content.setText(out);
+        content.setEditable(false);
         return content;
     }
     
@@ -288,7 +289,10 @@ public class PatientPortal extends Application
     {
         TextArea content = new TextArea();
         String v = patient.getImmunizationsPrescriptions();
-        content.setText(v.substring(v.lastIndexOf("Prescriptions:")));
+        if(v.lastIndexOf("Prescriptions:") != -1)
+        	content.setText(v.substring(v.lastIndexOf("Prescriptions:")));
+        else
+        	content.setText(v);
         content.setEditable(false);
         return content;
     }
@@ -299,7 +303,7 @@ public class PatientPortal extends Application
         TextArea content = new TextArea();
         
         String v = patient.getImmunizationsPrescriptions();
-        if(v.lastIndexOf("Immunizations:") < v.lastIndexOf("Prescriptions:"))
+        if(v.lastIndexOf("Immunizations:") < v.lastIndexOf("Prescriptions:") && v.lastIndexOf("Immunizations:")!=-1 && v.lastIndexOf("Prescriptions:")!=-1)
         	content.setText(v.substring(v.lastIndexOf("Immunizations:"), v.lastIndexOf("Prescriptions:")));
         else
         	content.setText(v);
@@ -313,7 +317,7 @@ public class PatientPortal extends Application
         TextArea content = new TextArea();
 
         String v = patient.getPreviousVisits();
-        if(v.lastIndexOf("Allergies:") < v.lastIndexOf("Concerns:"))
+        if(v.lastIndexOf("Immunizations:") < v.lastIndexOf("Prescriptions:") && v.lastIndexOf("Immunizations:")!=-1 && v.lastIndexOf("Prescriptions:")!=-1)
         	content.setText(v.substring(v.lastIndexOf("Allergies:"), v.lastIndexOf("Concerns:")));
         else
         	content.setText(v);
@@ -334,10 +338,11 @@ public class PatientPortal extends Application
         }catch(IOException exception) {
         	System.out.println(exception);
         }
-        if(out.lastIndexOf("INTAKE INFO:")+13 < out.lastIndexOf("FINDINGS:"))
+        if(out.lastIndexOf("INTAKE INFO:")+13 < out.lastIndexOf("FINDINGS:") && out.lastIndexOf("INTAKE INFO:")!=-1 && out.lastIndexOf("FINDINGS:")!=-1)
         	content.setText(out.substring(out.lastIndexOf("INTAKE INFO:")+13, out.lastIndexOf("FINDINGS:")));
         else
         	content.setText(out);
+        content.setEditable(false);
         return content;
     }
 
