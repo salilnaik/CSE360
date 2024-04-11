@@ -27,6 +27,7 @@ public class NurseLoginPage extends Application
         root.setSpacing(10);
         root.setStyle("-fx-background-color: linear-gradient(to bottom, #cccccc, #f9b9aa);");
 
+        // initialize grid
         GridPane grid = new GridPane();
         grid.setAlignment(Pos.CENTER);
         grid.setHgap(10);
@@ -43,10 +44,9 @@ public class NurseLoginPage extends Application
         passwordField = new PasswordField();
         grid.addRow(1, passwordLabel, passwordField);
 
+        // input buttons
         Button loginButton = new Button("Login");
         loginButton.setFont(Font.font(20));
-
-     
 
         Button backButton = new Button("Back");
         backButton.setFont(Font.font(20));
@@ -60,9 +60,10 @@ public class NurseLoginPage extends Application
         errorLabel.setTextFill(Color.RED);
         grid.add(errorLabel, 1, 3);
 
+        // add all elements to root pane
         root.getChildren().addAll(grid);
 
-
+        // action sets
         loginButton.setOnAction(e -> handleLogin(primaryStage));
 
         backButton.setOnAction(e ->
