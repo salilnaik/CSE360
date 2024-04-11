@@ -80,6 +80,8 @@ public class PatientPortal extends Application
         primaryStage.setScene(scene);
         primaryStage.show();
     }
+    
+    
 
     private VBox createPatientInfoBox(String username)
     {

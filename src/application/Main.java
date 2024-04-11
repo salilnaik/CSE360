@@ -51,6 +51,13 @@ public class Main extends Application {
                 PatientLoginPage patientLoginPage = new PatientLoginPage();
                 patientLoginPage.start(primaryStage);
             });
+            
+            nurseButton.setOnAction(e ->
+            {
+                NurseLoginPage nurseLoginPage = new NurseLoginPage();
+                nurseLoginPage.start(primaryStage);
+            });
+            
         } catch(Exception e) {
             e.printStackTrace();
         }
