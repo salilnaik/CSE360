@@ -208,6 +208,8 @@ public class PatientPortal extends Application
         sendButton.setOnAction(e -> sendMessageToDoctor(tabPane));
         messagesContent.getChildren().addAll(messageTextArea, sendButton);
         messagesTab.setContent(messagesContent);
+        
+        loadDoctorMessages(messagesContent);
 
         tabPane.getTabs().addAll(medicalRecordsTab, allergiesTab, visitEntriesTab, immunizationsTab, prescriptionsTab, findingsTab, messagesTab);
 
@@ -223,7 +225,7 @@ public class PatientPortal extends Application
             String filePath = "messages/" + loggedInUsername + ".txt";
             try (FileWriter writer = new FileWriter(filePath, true))
             {
-                writer.write("Patient: " + LocalDateTime.now() + "\n" + message + "\n");
+                writer.write(loggedInUsername + ": " + message + "\n");
                 writer.flush();
                 // update messages tab content
                 TextArea messagesTextArea = (TextArea) ((VBox) ((Tab) tabPane.getTabs().get(6)).getContent()).getChildren().get(0);
@@ -235,6 +237,21 @@ public class PatientPortal extends Application
             {
                 System.err.println("Error writing message to file: " + ex.getMessage());
             }
+        }
+    }
+    
+    private void loadDoctorMessages(VBox messagesContent) {
+        String filePath = "messages/" + loggedInUsername + ".txt";
+        try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
+            String line;
+            TextArea messagesTextArea = new TextArea();
+            messagesTextArea.setEditable(false);
+            while ((line = reader.readLine()) != null) {
+                messagesTextArea.appendText(line + "\n");
+            }
+            messagesContent.getChildren().add(messagesTextArea);
+        } catch (IOException e) {
+            System.err.println("Error reading doctor messages: " + e.getMessage());
         }
     }
 

@@ -25,7 +25,8 @@ public class DoctorPortal extends Application
     private TextArea allergiesTextArea;
     private TextArea immunizationsTextArea;
     private TextArea medicalRecordsTextArea;
-    private TextArea messagesTextArea; 
+    private TextArea messagesTextArea;
+    private TextArea sendMessageTextArea;
 
     public DoctorPortal(String username)
     {
@@ -86,6 +87,10 @@ public class DoctorPortal extends Application
         messagesTextArea = new TextArea();
         messagesTextArea.setEditable(false); 
         messagesTextArea.setPrefHeight(100);
+        
+        sendMessageTextArea = new TextArea();
+        sendMessageTextArea.setPromptText("Type your message here...");
+        sendMessageTextArea.setPrefHeight(100);
 
         Button updateButton = new Button("Update");
         updateButton.setOnAction(e ->
@@ -94,6 +99,20 @@ public class DoctorPortal extends Application
             String selectedPatient = patientsComboBox.getValue();
             upload(selectedPatient);
         });
+        
+        // button for sending message
+        Button sendButton = new Button("Send");
+        sendButton.setOnAction(e ->
+        {
+            String selectedPatient = patientsComboBox.getValue();
+            String message = sendMessageTextArea.getText();
+            sendMessage(selectedPatient, message);
+            sendMessageTextArea.clear(); // clear the TextArea after sending the message
+        });
+        
+        VBox sendMessageBox = new VBox(10);
+        sendMessageBox.setAlignment(Pos.CENTER);
+        sendMessageBox.getChildren().addAll(sendMessageTextArea, sendButton);
 
         VBox updateMedicalRecordsBox = new VBox(10);
         updateMedicalRecordsBox.setAlignment(Pos.CENTER);
@@ -111,7 +130,7 @@ public class DoctorPortal extends Application
         });
 
         // add components to root layout
-        root.getChildren().addAll(titleLabel, medicalRecordsTextArea, updateMedicalRecordsBox, messagesTextArea, exitButton);
+        root.getChildren().addAll(titleLabel, medicalRecordsTextArea, updateMedicalRecordsBox, messagesTextArea, sendMessageBox, exitButton);
 
         // Set up scene
         Scene scene = new Scene(root, 900, 600);
@@ -119,11 +138,19 @@ public class DoctorPortal extends Application
         primaryStage.show();
     }
 
-    // Method to get patient IDs from the Database
+    // method to get patient IDs from the Database
     private ObservableList<String> getPatientIDs()
     {
         Database database = new Database();
         return FXCollections.observableArrayList(database.getPatientIDs());
+    }
+
+    // method to send a message to the patient
+    private void sendMessage(String patientUsername, String message)
+    {
+        Database database = new Database();
+        // pass the doctor's ID as the senderId and the patient's ID as the recipientId
+        database.saveMessage(patientUsername, message, false);
     }
 
 
@@ -172,7 +199,7 @@ public class DoctorPortal extends Application
                     }
                 }
             }
-            // Append immunizations and allergies if not found
+            // append immunizations and allergies if not found
             if (!foundImmunizations)
             {
                 updatedInfo.append("Immunizations: ").append(newImmunizations).append("\n");

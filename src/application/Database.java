@@ -117,13 +117,13 @@ public class Database {
         return patientIDs;
     }
 	
-    public void saveMessage(String senderId, String recipientId, String message, boolean fromPatient) {
+    public void saveMessage(String recipientId, String message, boolean fromPatient) {
         String filename = "messages/" + recipientId + ".txt";
         try (PrintWriter writer = new PrintWriter(new FileOutputStream(new File(filename), true))) {
             if (fromPatient) {
-                writer.println("Patient (" + senderId + "): " + message);
+                writer.println("Patient: " + message);
             } else {
-                writer.println("Doctor (" + senderId + "): " + message);
+                writer.println("Doctor: " + message);
             }
         } catch (IOException e) {
             System.out.println("Error saving message: " + e.getMessage());
