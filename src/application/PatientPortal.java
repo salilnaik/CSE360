@@ -183,7 +183,7 @@ public class PatientPortal extends Application
             StringBuilder updatedInfo = new StringBuilder();
             while ((line = reader.readLine()) != null)
             {
-                String[] parts = line.split(":");
+                String[] parts = line.split(":"); //break up input-- left of colon is name of info category, right is value
                 if (parts.length == 2)
                 {
                     String key = parts[0].trim();
@@ -203,7 +203,7 @@ public class PatientPortal extends Application
                             updatedInfo.append("Insurance ID: ").append(newInsuranceID).append("\n");
                             break;
                         default:
-                            updatedInfo.append(line).append("\n");
+                            updatedInfo.append(line).append("\n"); 
                     }
                 }
             }
@@ -214,7 +214,7 @@ public class PatientPortal extends Application
                 messageLabel.setText("Patient information updated successfully");
             }
             
-            catch (IOException ex)
+            catch (IOException ex) 
             {
                 System.err.println("Error updating patient information: " + ex.getMessage());
             }
