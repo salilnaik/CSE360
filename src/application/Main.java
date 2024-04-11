@@ -52,12 +52,19 @@ public class Main extends Application {
                 patientLoginPage.start(primaryStage);
             });
             
+            // event handler to the Doctor button
+            doctorButton.setOnAction(e ->
+            {
+                DoctorLoginPage doctorLoginPage = new DoctorLoginPage();
+                doctorLoginPage.start(primaryStage);
+            });
+            
+            // event handler to the Nurse button
             nurseButton.setOnAction(e ->
             {
                 NurseLoginPage nurseLoginPage = new NurseLoginPage();
                 nurseLoginPage.start(primaryStage);
             });
-            
         } catch(Exception e) {
             e.printStackTrace();
         }

@@ -54,8 +54,9 @@ public class PatientLoginPage extends Application
 
         HBox buttonBox = new HBox(10);
         buttonBox.setAlignment(Pos.CENTER_RIGHT);
-        buttonBox.getChildren().addAll(createAccountButton, loginButton);
+        buttonBox.getChildren().addAll(backButton, createAccountButton, loginButton);
         grid.add(buttonBox, 1, 2);
+        
 
         errorLabel = new Label();			// error when information is incorrect
         errorLabel.setTextFill(Color.RED);
@@ -91,7 +92,7 @@ public class PatientLoginPage extends Application
         String username = usernameField.getText();
         String password = passwordField.getText();
 
-        // authenticate user by using the Database
+        // authenticate user using the Database
         Database database = new Database();
         if (database.validatePatient(username, password))
         {
@@ -102,10 +103,10 @@ public class PatientLoginPage extends Application
         
         else
         {
-            errorLabel.setText("Invalid login.");
-            // error message does not tell the user exactly what is incorrect-- prevents oversharing info
+            errorLabel.setText("Invalid username or password.");
         }
     }
+
 
     public static void main(String[] args)
     {

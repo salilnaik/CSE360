@@ -1,12 +1,12 @@
 package application;
 
-public class Nurse
+public class Doctor
 {
     private String username;
     private String employeeId;
     private String messages;
 
-    public Nurse(String username, String employeeId)
+    public Doctor(String username, String employeeId)
     {
         this.username = username;
         this.employeeId = employeeId;

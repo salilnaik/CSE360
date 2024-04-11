@@ -27,7 +27,6 @@ public class NurseLoginPage extends Application
         root.setSpacing(10);
         root.setStyle("-fx-background-color: linear-gradient(to bottom, #cccccc, #f9b9aa);");
 
-        // initialize grid
         GridPane grid = new GridPane();
         grid.setAlignment(Pos.CENTER);
         grid.setHgap(10);
@@ -44,12 +43,14 @@ public class NurseLoginPage extends Application
         passwordField = new PasswordField();
         grid.addRow(1, passwordLabel, passwordField);
 
-        // input buttons
         Button loginButton = new Button("Login");
         loginButton.setFont(Font.font(20));
 
+     
+
         Button backButton = new Button("Back");
         backButton.setFont(Font.font(20));
+        grid.add(backButton, 0, 2);
 
         HBox buttonBox = new HBox(10);
         buttonBox.setAlignment(Pos.CENTER_RIGHT);
@@ -60,10 +61,9 @@ public class NurseLoginPage extends Application
         errorLabel.setTextFill(Color.RED);
         grid.add(errorLabel, 1, 3);
 
-        // add all elements to root pane
         root.getChildren().addAll(grid);
 
-        // action sets
+
         loginButton.setOnAction(e -> handleLogin(primaryStage));
 
         backButton.setOnAction(e ->
@@ -85,17 +85,16 @@ public class NurseLoginPage extends Application
 
         // authenticate user by using the Database
         Database database = new Database();
-        if (database.validatePatient(username, password))
+        if (database.validateNurse(username, password))
         {
-            // switch to the PatientPortal scene
+            // switch to the NursePortal scene
             NursePortal nursePortal = new NursePortal(username);
             nursePortal.start(primaryStage);
         }
         
         else
         {
-            errorLabel.setText("Invalid login."); 
-            // error message does not tell the user exactly what is incorrect; prevents oversharing info
+            errorLabel.setText("Invalid username or password.");
         }
     }
 

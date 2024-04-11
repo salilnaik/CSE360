@@ -1,10 +1,5 @@
 package application;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.PrintWriter;
-
 import javafx.application.Application;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -33,20 +28,11 @@ public class CreateAccountPage extends Application
     private PasswordField passwordField;
     private PasswordField confirmPasswordField;
     private Label errorLabel;
-    
-    private String constructUsername(String firstName, String lastName, String dob)
-    {
-        // construct the username using the specified format
-        String firstNameInitial = firstName.substring(0, 1).toLowerCase();
-        String lastNameWithoutSpaces = lastName.replace(" ", "").toLowerCase();
-        String yearOfBirth = dob.substring(0, 4);
-        return firstNameInitial + lastNameWithoutSpaces + yearOfBirth;
-    } 
-    
+
     @Override
     public void start(Stage primaryStage)
     {
-    	primaryStage.setTitle("Create Account");
+        primaryStage.setTitle("Create Account");
 
         VBox root = new VBox();
         root.setAlignment(Pos.CENTER);
@@ -185,7 +171,6 @@ public class CreateAccountPage extends Application
                 }
             }
 
-            // populate file with patient info
             String filePath = directoryPath + username + ".txt";
             try (PrintWriter writer = new PrintWriter(new FileOutputStream(new File(filePath), true)))
             {
@@ -205,13 +190,21 @@ public class CreateAccountPage extends Application
             {
                 System.out.println("Error occurred while creating account: " + ex.getMessage());
             }
-
         });
 
         root.getChildren().addAll(grid);
         Scene scene = new Scene(root, 900, 600);
         primaryStage.setScene(scene);
         primaryStage.show();
+    }
+
+    private String constructUsername(String firstName, String lastName, String dob)
+    {
+        // construct the username using the specified format
+        String firstNameInitial = firstName.substring(0, 1).toLowerCase();
+        String lastNameWithoutSpaces = lastName.replace(" ", "").toLowerCase();
+        String yearOfBirth = dob.substring(0, 4);
+        return firstNameInitial + lastNameWithoutSpaces + yearOfBirth;
     }
 
     public static void main(String[] args)

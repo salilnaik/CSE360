@@ -1,34 +1,37 @@
 package application;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
-
 import javafx.application.Application;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
-import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
+
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.time.LocalDateTime;
+import java.util.Scanner;
 
 public class PatientPortal extends Application
 {
 
-    private TextField phoneNumberField;
-    private TextField emailField;
-    private TextField pharmacyField;
-    private TextField insuranceField;
-    private Label messageLabel;
-    private String loggedInUsername; 
-    
-    // keep track of current user
+    private String loggedInUsername;
+    private VBox patientInfoBox;
+    private TabPane tabPane;
+    private TextArea messageTextArea;
+    private Patient patient;
+    private Database db = new Database();
+
     public PatientPortal(String username)
     {
         this.loggedInUsername = username;
+        this.patient = db.getPatientInfo(username);
     }
 
     @Override
@@ -36,7 +39,6 @@ public class PatientPortal extends Application
     {
         primaryStage.setTitle("Patient Portal");
 
-        // create UI components for patient portal
         VBox root = new VBox();
         root.setAlignment(Pos.CENTER);
         root.setSpacing(10);
@@ -46,46 +48,37 @@ public class PatientPortal extends Application
         titleLabel.setFont(Font.font(24));
         titleLabel.setAlignment(Pos.CENTER);
 
-        // add components to display patient information
-        VBox patientInfoBox = createPatientInfoBox(loggedInUsername);
+        patientInfoBox = createPatientInfoBox(loggedInUsername);
 
-        // add fields for updating contact information, pharmacy information, and insurance ID
-        phoneNumberField = new TextField();
-        phoneNumberField.setPromptText("New Phone Number");
+        Button refreshButton = new Button("Refresh");
+        refreshButton.setOnAction(e -> refreshPatientInfo(loggedInUsername));
 
-        emailField = new TextField();
-        emailField.setPromptText("New Email Address");
+        Button logoutButton = new Button("Logout");
+        logoutButton.setOnAction(e ->
+        {
+            primaryStage.close();
+            PatientLoginPage patientLoginPage = new PatientLoginPage();
+            patientLoginPage.start(new Stage());
+        });
 
-        pharmacyField = new TextField();
-        pharmacyField.setPromptText("New Pharmacy Information");
+        HBox buttonBox = new HBox(10);
+        buttonBox.setAlignment(Pos.CENTER_RIGHT);
+        buttonBox.getChildren().addAll(refreshButton, logoutButton);
+        buttonBox.setPadding(new Insets(10, 0, 0, 0));
+        
+        TabPane tabPane = createTabPane();
+        Button sendButton = new Button("Send Message");
+        sendButton.setOnAction(e -> sendMessageToDoctor(tabPane));
 
-        insuranceField = new TextField();
-        insuranceField.setPromptText("New Insurance ID");
+        root.getChildren().addAll(titleLabel, patientInfoBox, buttonBox, tabPane);
 
-        Button updateButton = new Button("Update");			// update button
-        updateButton.setOnAction(e -> updatePatientInfo());
-
-        messageLabel = new Label();
-        messageLabel.setTextFill(Color.GREEN);
-
-        VBox updateInfoBox = new VBox(10);					// update infobox
-        updateInfoBox.setAlignment(Pos.CENTER);
-        updateInfoBox.getChildren().addAll(phoneNumberField, emailField, pharmacyField, insuranceField, updateButton, messageLabel);
-
-        // add components to root layout
-        root.getChildren().addAll(titleLabel, patientInfoBox, updateInfoBox, createTabPane());
-
-        // set up scene
         Scene scene = new Scene(root, 900, 600);
         primaryStage.setScene(scene);
         primaryStage.show();
     }
-    
-    
 
     private VBox createPatientInfoBox(String username)
     {
-        // create a VBox to display patient information
         VBox patientInfoBox = new VBox();
         patientInfoBox.setAlignment(Pos.CENTER);
         patientInfoBox.setSpacing(10);
@@ -94,20 +87,41 @@ public class PatientPortal extends Application
 
         try (BufferedReader reader = new BufferedReader(new FileReader(filePath)))
         {
-            // read patient information from the file
             String line;
             while ((line = reader.readLine()) != null)
             {
-                // parse the line to extract relevant information
                 String[] parts = line.split(":");
-                if (parts.length == 2 && !parts[0].trim().equals("Password"))
-                { 
-                	// exclude password field
+                if (parts.length == 2)
+                {
                     String key = parts[0].trim();
                     String value = parts[1].trim();
-                    // display the patient information
-                    Label infoLabel = new Label(key + ": " + value);
-                    patientInfoBox.getChildren().add(infoLabel);
+                    if (key.equals("First Name") || key.equals("Last Name") || key.equals("Date of Birth"))
+                    {
+                        Label infoLabel = new Label(key + ": " + value);
+                        patientInfoBox.getChildren().add(infoLabel);
+                    }
+                    
+                    else if (!key.equals("Password") &&
+                            !key.equals("Findings") && !key.equals("Prescription") &&
+                            !key.equals("Allergies") && !key.equals("Immunizations"))
+                    {
+                        HBox infoBox = new HBox(10);
+                        infoBox.setAlignment(Pos.CENTER); 
+                        Label keyLabel = new Label(key + ": ");
+                        TextField valueTextField = new TextField(value);
+                        Button updateButton = new Button("Update");
+                        updateButton.setOnAction(e ->
+                        {
+                            // update patient's information
+                            String newValue = valueTextField.getText();
+                            updatePatientInfo(username, key, newValue);
+                            // refresh patient info box
+                            patientInfoBox.getChildren().clear();
+                            patientInfoBox.getChildren().addAll(createPatientInfoBox(username).getChildren());
+                        });
+                        infoBox.getChildren().addAll(keyLabel, valueTextField, updateButton);
+                        patientInfoBox.getChildren().add(infoBox);
+                    }
                 }
             }
         }
@@ -121,61 +135,15 @@ public class PatientPortal extends Application
     }
 
 
-    private TabPane createTabPane()
+    private void refreshPatientInfo(String username)
     {
-        // create a TabPane for navigating between different sections of patient information
-        TabPane tabPane = new TabPane();
-        tabPane.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
-
-        // create tabs for different sections such as Medical Records, Allergies, Visit Entries
-        Tab medicalRecordsTab = new Tab("Medical Records");
-        Tab allergiesTab = new Tab("Allergies");
-        Tab visitEntriesTab = new Tab("Visit Entries");
-
-        // add placeholder content to each tab
-        medicalRecordsTab.setContent(createMedicalRecordsContent());
-        allergiesTab.setContent(createAllergiesContent());
-        visitEntriesTab.setContent(createVisitEntriesContent());
-
-        // add tabs to the TabPane
-        tabPane.getTabs().addAll(medicalRecordsTab, allergiesTab, visitEntriesTab);
-
-        return tabPane;
+        patientInfoBox.getChildren().clear();
+        VBox updatedInfoBox = createPatientInfoBox(username);
+        patientInfoBox.getChildren().add(updatedInfoBox);
     }
-
-    // placeholder methods for creating content of each tab
-    private VBox createMedicalRecordsContent()
+    
+    private void updatePatientInfo(String username, String key, String newValue)
     {
-        VBox content = new VBox();
-        content.getChildren().add(new Label("Medical Records Content"));
-        return content;
-    }
-
-    private VBox createAllergiesContent()
-    {
-        VBox content = new VBox();
-        content.getChildren().add(new Label("Allergies Content"));
-        return content;
-    }
-
-    private VBox createVisitEntriesContent()
-    {
-        VBox content = new VBox();
-        content.getChildren().add(new Label("Visit Entries Content"));
-        return content;
-    }
-
-    // method to update patient information
-    private void updatePatientInfo()
-    {
-        // get updated values from input fields
-        String newPhoneNumber = phoneNumberField.getText();
-        String newEmail = emailField.getText();
-        String newPharmacy = pharmacyField.getText();
-        String newInsuranceID = insuranceField.getText();
-
-        // update patient information in the file
-        String username = "username";
         String filePath = "patient_login/" + username + ".txt";
         try (BufferedReader reader = new BufferedReader(new FileReader(filePath)))
         {
@@ -183,38 +151,24 @@ public class PatientPortal extends Application
             StringBuilder updatedInfo = new StringBuilder();
             while ((line = reader.readLine()) != null)
             {
-                String[] parts = line.split(":"); //break up input-- left of colon is name of info category, right is value
-                if (parts.length == 2)
+                if (line.startsWith(key))
                 {
-                    String key = parts[0].trim();
-                    String value = parts[1].trim();
-                    switch (key)
-                    {
-                        case "Phone Number":
-                            updatedInfo.append("Phone Number: ").append(newPhoneNumber).append("\n");
-                            break;
-                        case "Email":
-                            updatedInfo.append("Email: ").append(newEmail).append("\n");
-                            break;
-                        case "Pharmacy Information":
-                            updatedInfo.append("Pharmacy Information: ").append(newPharmacy).append("\n");
-                            break;
-                        case "Insurance ID":
-                            updatedInfo.append("Insurance ID: ").append(newInsuranceID).append("\n");
-                            break;
-                        default:
-                            updatedInfo.append(line).append("\n"); 
-                    }
+                    updatedInfo.append(key).append(": ").append(newValue).append("\n");
+                }
+                
+                else
+                {
+                    updatedInfo.append(line).append("\n");
                 }
             }
             // write the updated information back to the file
             try (PrintWriter writer = new PrintWriter(new FileWriter(filePath)))
             {
                 writer.print(updatedInfo.toString());
-                messageLabel.setText("Patient information updated successfully");
+                System.out.println("Patient information updated successfully");
             }
             
-            catch (IOException ex) 
+            catch (IOException ex)
             {
                 System.err.println("Error updating patient information: " + ex.getMessage());
             }
@@ -226,15 +180,169 @@ public class PatientPortal extends Application
         }
     }
 
-    public static void main(String[] args)
+    private TabPane createTabPane()
     {
-        // pass the logged-in username as an argument when launching the application
-        launch(args);
+        TabPane tabPane = new TabPane();
+        tabPane.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
+
+        Tab medicalRecordsTab = new Tab("Medical Records");
+        medicalRecordsTab.setContent(createMedicalRecordsContent(loggedInUsername));
+
+        Tab allergiesTab = new Tab("Allergies");
+        allergiesTab.setContent(createAllergiesContent(loggedInUsername));
+
+        Tab visitEntriesTab = new Tab("Visit Entries");
+        visitEntriesTab.setContent(createVisitEntriesContent(loggedInUsername));
+
+        Tab immunizationsTab = new Tab("Immunizations");
+        immunizationsTab.setContent(createImmunizationsContent(loggedInUsername));
+
+        Tab prescriptionsTab = new Tab("Prescriptions");
+        prescriptionsTab.setContent(createPrescriptionsContent(loggedInUsername));
+
+        Tab findingsTab = new Tab("Findings");
+        findingsTab.setContent(createFindingsContent(loggedInUsername));
+
+        Tab messagesTab = new Tab("Messages");
+        VBox messagesContent = new VBox(10);
+        messagesContent.setAlignment(Pos.CENTER);
+        messageTextArea = new TextArea();
+        messageTextArea.setPromptText("Enter your message here...");
+        messageTextArea.setPrefHeight(100);
+        Button sendButton = new Button("Send Message");
+        sendButton.setOnAction(e -> sendMessageToDoctor(tabPane));
+        messagesContent.getChildren().addAll(messageTextArea, sendButton);
+        messagesTab.setContent(messagesContent);
+
+        loadDoctorMessages(messagesContent);
+        
+        tabPane.getTabs().addAll(medicalRecordsTab, allergiesTab, visitEntriesTab, immunizationsTab, prescriptionsTab, findingsTab, messagesTab);
+
+        return tabPane;
     }
 
-    // method to set the logged-in username
-    public void setLoggedInUsername(String username)
+
+    private void sendMessageToDoctor(TabPane tabPane)
     {
-        this.loggedInUsername = username;
+        String message = messageTextArea.getText();
+        if (!message.isEmpty())
+        {
+            String filePath = "messages/" + loggedInUsername + ".txt";
+            try (FileWriter writer = new FileWriter(filePath, true))
+            {
+                writer.write("Patient: " + LocalDateTime.now() + "\n" + message + "\n");
+                writer.flush();
+                // update messages tab content
+                TextArea messagesTextArea = (TextArea) ((VBox) ((Tab) tabPane.getTabs().get(6)).getContent()).getChildren().get(0);
+                messagesTextArea.appendText("\nYou: " + LocalDateTime.now() + "\n" + message + "\n");
+                messageTextArea.clear();
+            }
+            
+            catch (IOException ex)
+            {
+                System.err.println("Error writing message to file: " + ex.getMessage());
+            }
+        }
+    }
+    
+    private void loadDoctorMessages(VBox messagesContent) {
+        String filePath = "messages/" + loggedInUsername + ".txt";
+        try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
+            String line;
+            TextArea messagesTextArea = new TextArea();
+            messagesTextArea.setEditable(false);
+            while ((line = reader.readLine()) != null) {
+                messagesTextArea.appendText(line + "\n");
+            }
+            messagesContent.getChildren().add(messagesTextArea);
+        } catch (IOException e) {
+            System.err.println("Error reading doctor messages: " + e.getMessage());
+        }
+    }
+
+    private TextArea createMedicalRecordsContent(String username)
+    {
+        TextArea content = new TextArea();
+        String out = "";
+        try {
+            Scanner reader = new Scanner(new File("patient_info/" + username + ".txt"));
+			while(reader.hasNextLine()) {
+				out += reader.nextLine() + "\n";
+			}
+        }catch(IOException exception) {
+        	System.out.println(exception);
+        }
+        content.setText(out);
+        return content;
+    }
+    
+    private TextArea createFindingsContent(String username)
+    {
+        TextArea content = new TextArea(patient.getMedicalHistory());
+        content.setEditable(false);
+        return content;
+    }
+
+    
+    private TextArea createPrescriptionsContent(String username)
+    {
+        TextArea content = new TextArea();
+        String v = patient.getImmunizationsPrescriptions();
+        content.setText(v.substring(v.lastIndexOf("Prescriptions:")));
+        content.setEditable(false);
+        return content;
+    }
+
+    
+    private TextArea createImmunizationsContent(String username)
+    {
+        TextArea content = new TextArea();
+        
+        String v = patient.getImmunizationsPrescriptions();
+        if(v.lastIndexOf("Immunizations:") < v.lastIndexOf("Prescriptions:"))
+        	content.setText(v.substring(v.lastIndexOf("Immunizations:"), v.lastIndexOf("Prescriptions:")));
+        else
+        	content.setText(v);
+        content.setEditable(false);
+        return content;
+    }
+
+
+    private TextArea createAllergiesContent(String username)
+    {
+        TextArea content = new TextArea();
+
+        String v = patient.getPreviousVisits();
+        if(v.lastIndexOf("Allergies:") < v.lastIndexOf("Concerns:"))
+        	content.setText(v.substring(v.lastIndexOf("Allergies:"), v.lastIndexOf("Concerns:")));
+        else
+        	content.setText(v);
+        content.setEditable(false);
+
+        return content;
+    }
+
+    private TextArea createVisitEntriesContent(String username)
+    {
+    	TextArea content = new TextArea();
+        String out = "";
+        try {
+            Scanner reader = new Scanner(new File("patient_info/" + username + ".txt"));
+			while(reader.hasNextLine()) {
+				out += reader.nextLine() + "\n";
+			}
+        }catch(IOException exception) {
+        	System.out.println(exception);
+        }
+        if(out.lastIndexOf("INTAKE INFO:")+13 < out.lastIndexOf("FINDINGS:"))
+        	content.setText(out.substring(out.lastIndexOf("INTAKE INFO:")+13, out.lastIndexOf("FINDINGS:")));
+        else
+        	content.setText(out);
+        return content;
+    }
+
+    public static void main(String[] args)
+    {
+        launch(args);
     }
 }

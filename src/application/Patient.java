@@ -11,6 +11,7 @@ public class Patient {
 	private String previous_visits = ""; // Will store allergy info, health concerns, vitals (empty if under 12)
 	private String pharmacy = "";
 	private String insurance = "";
+	private String email = "";
 	
 	// No arguments in constructor
 	public Patient() {}
@@ -46,25 +47,25 @@ public class Patient {
 	public String getInsurance() {
 		return insurance;
 	}
+	public String getEmail() {
+		return email;
+	}
 	
 	// public setters for patient info
+	public void setPatientId(String patient_id) {
+		this.patient_id = patient_id;
+	}
 	public void setFirstName(String first_name) {
 		this.first_name = first_name;
-		// Patient ID is automatically generated from first name, last name, and birthday without any '-', '/', or '.' characters
-		this.patient_id = this.first_name + this.last_name + this.birthday.replaceAll("[-|/|.]", ""); // <- Regex replaces all '-', '/', '.' characters in birthday with ""
 	}
 	public void setLastName(String last_name) {
 		this.last_name = last_name;
-		// Patient ID is automatically generated from first name, last name, and birthday without any '-', '/', or '.' characters
-		this.patient_id = this.first_name + this.last_name + this.birthday.replaceAll("[-|/|.]", ""); // <- Regex replaces all '-', '/', '.' characters in birthday with ""
 	}
 	public void setPhone(String phone_number) {
 		this.phone_number = phone_number;
 	}
 	public void setBirthday(String birthday) {
 		this.birthday = birthday;
-		// Patient ID is automatically generated from first name, last name, and birthday without any '-', '/', or '.' characters
-		this.patient_id = this.first_name + this.last_name + this.birthday.replaceAll("[-|/|.]", ""); // <- Regex replaces all '-', '/', '.' characters in birthday with ""
 	}
 	public void setMedicalHistory(String medical_history) {
 		this.medical_history = medical_history;
@@ -80,5 +81,8 @@ public class Patient {
 	}
 	public void setInsurance(String insurance) {
 		this.insurance = insurance;
+	}
+	public void setEmail(String email) {
+		this.email = email;
 	}
 }
