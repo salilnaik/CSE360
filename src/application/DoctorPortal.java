@@ -1,10 +1,14 @@
 package application;
 
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.Scanner;
 
 import javafx.application.Application;
 import javafx.collections.FXCollections;
@@ -22,11 +26,12 @@ public class DoctorPortal extends Application
     private String username;
     private TextArea findingsTextArea;
     private TextArea prescriptionTextArea;
-    private TextArea allergiesTextArea;
     private TextArea immunizationsTextArea;
     private TextArea medicalRecordsTextArea;
     private TextArea messagesTextArea;
     private TextArea sendMessageTextArea;
+    private Patient patient;
+    private Database db = new Database();
 
     public DoctorPortal(String username)
     {
@@ -58,13 +63,25 @@ public class DoctorPortal extends Application
             String selectedPatient = patientsComboBox.getValue();
             if (selectedPatient != null && !selectedPatient.isEmpty())
             {
+            	String out = "";
+                try {
+	                Scanner reader = new Scanner(new File("patient_info/" + patientsComboBox.getValue() + ".txt"));
+	    			while(reader.hasNextLine()) {
+	    				out += reader.nextLine() + "\n";
+	    			}
+                }catch(IOException exception) {
+                	System.out.println(exception);
+                }
+                medicalRecordsTextArea.setText(out);
+            	patient = db.getPatientInfo(selectedPatient);
                 loadMessages(selectedPatient);
             }
         });
 
         medicalRecordsTextArea = new TextArea();
-        medicalRecordsTextArea.setPromptText("Enter medical records here...");
+        medicalRecordsTextArea.setPromptText("No patient history yet.");
         medicalRecordsTextArea.setPrefHeight(200); 
+        medicalRecordsTextArea.setEditable(false);
 
         // add fields for updating medical records
         findingsTextArea = new TextArea();
@@ -74,10 +91,6 @@ public class DoctorPortal extends Application
         prescriptionTextArea = new TextArea();
         prescriptionTextArea.setPromptText("Enter prescription here...");
         prescriptionTextArea.setPrefHeight(100); 
-
-        allergiesTextArea = new TextArea();
-        allergiesTextArea.setPromptText("Enter allergies here...");
-        allergiesTextArea.setPrefHeight(100);
 
         immunizationsTextArea = new TextArea();
         immunizationsTextArea.setPromptText("Enter immunizations here...");
@@ -97,7 +110,16 @@ public class DoctorPortal extends Application
         {
             // get selected patient and update medical records
             String selectedPatient = patientsComboBox.getValue();
-            upload(selectedPatient);
+            
+            try {
+				PrintWriter writer = new PrintWriter(new FileOutputStream(new File("patient_info/" + patient.getPatientId() + ".txt"), true));
+				writer.append("\nFINDINGS:\n" + findingsTextArea.getText() + "\nIMMUNIZATIONS/PRESCRIPTIONS:\n" + "Immunizations:\n" + immunizationsTextArea.getText() + "\nPrescriptions:\n" + prescriptionTextArea.getText());
+				writer.close();
+			} catch(FileNotFoundException exception) {
+				System.out.println(exception);
+			}
+            
+//            upload(selectedPatient);
         });
         
         // button for sending message
@@ -117,8 +139,7 @@ public class DoctorPortal extends Application
         VBox updateMedicalRecordsBox = new VBox(10);
         updateMedicalRecordsBox.setAlignment(Pos.CENTER);
         updateMedicalRecordsBox.getChildren().addAll(
-                patientsComboBox, findingsTextArea, immunizationsTextArea,
-                allergiesTextArea, prescriptionTextArea, updateButton
+                patientsComboBox, findingsTextArea, immunizationsTextArea, prescriptionTextArea, updateButton
         );
 
         Button exitButton = new Button("Exit");
@@ -141,8 +162,7 @@ public class DoctorPortal extends Application
     // method to get patient IDs from the Database
     private ObservableList<String> getPatientIDs()
     {
-        Database database = new Database();
-        return FXCollections.observableArrayList(database.getPatientIDs());
+        return FXCollections.observableArrayList(db.getPatientIDs());
     }
 
     // method to send a message to the patient
@@ -236,8 +256,7 @@ public class DoctorPortal extends Application
     
     private void loadMessages(String patientId)
     {
-        Database database = new Database();
-        String messages = database.getMessages(patientId);
+        String messages = db.getMessages(patientId);
         messagesTextArea.setText(messages);
     }
 
